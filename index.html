@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Web Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+
+        .calculator-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 360px;
+            padding: 2rem;
+        }
+
+        .display {
+            background: #f8fafc;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: right;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            word-break: break-all;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .display .previous {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-bottom: 0.25rem;
+        }
+
+        .display .current {
+            font-size: 2.25rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .btn {
+            height: 4rem;
+            border-radius: 1rem;
+            font-size: 1.25rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-number {
+            background: #ffffff;
+            color: #334155;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-number:hover {
+            background: #f1f5f9;
+        }
+
+        .btn-operator {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .btn-operator:hover {
+            background: #c7d2fe;
+        }
+
+        .btn-special {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .btn-special:hover {
+            background: #fecaca;
+        }
+
+        .btn-equals {
+            background: #4f46e5;
+            color: white;
+            grid-column: span 2;
+        }
+
+        .btn-equals:hover {
+            background: #4338ca;
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator-card">
+        <!-- 결과창 -->
+        <div class="display">
+            <div id="previous-op" class="previous"></div>
+            <div id="current-op" class="current">0</div>
+        </div>
+
+        <!-- 버튼 그리드 -->
+        <div class="grid grid-cols-4 gap-3">
+            <div onclick="clearDisplay()" class="btn btn-special col-span-2">AC</div>
+            <div onclick="deleteLast()" class="btn btn-special">DEL</div>
+            <div onclick="appendOperator('/')" class="btn btn-operator">÷</div>
+
+            <div onclick="appendNumber('7')" class="btn btn-number">7</div>
+            <div onclick="appendNumber('8')" class="btn btn-number">8</div>
+            <div onclick="appendNumber('9')" class="btn btn-number">9</div>
+            <div onclick="appendOperator('*')" class="btn btn-operator">×</div>
+
+            <div onclick="appendNumber('4')" class="btn btn-number">4</div>
+            <div onclick="appendNumber('5')" class="btn btn-number">5</div>
+            <div onclick="appendNumber('6')" class="btn btn-number">6</div>
+            <div onclick="appendOperator('-')" class="btn btn-operator">-</div>
+
+            <div onclick="appendNumber('1')" class="btn btn-number">1</div>
+            <div onclick="appendNumber('2')" class="btn btn-number">2</div>
+            <div onclick="appendNumber('3')" class="btn btn-number">3</div>
+            <div onclick="appendOperator('+')" class="btn btn-operator">+</div>
+
+            <div onclick="appendNumber('0')" class="btn btn-number">0</div>
+            <div onclick="appendNumber('.')" class="btn btn-number">.</div>
+            <div onclick="calculate()" class="btn btn-equals">=</div>
+        </div>
+    </div>
+
+    <script>
+        let currentInput = '0';
+        let previousInput = '';
+        let operator = null;
+        let shouldResetScreen = false;
+
+        const currentDisplay = document.getElementById('current-op');
+        const previousDisplay = document.getElementById('previous-op');
+
+        // 숫자 입력
+        function appendNumber(number) {
+            if (currentInput === '0' || shouldResetScreen) {
+                currentInput = number;
+                shouldResetScreen = false;
+            } else {
+                if (number === '.' && currentInput.includes('.')) return;
+                currentInput += number;
+            }
+            updateDisplay();
+        }
+
+        // 연산자 입력
+        function appendOperator(op) {
+            if (operator !== null) calculate();
+            previousInput = currentInput;
+            operator = op;
+            shouldResetScreen = true;
+            updateDisplay();
+        }
+
+        // 전체 삭제
+        function clearDisplay() {
+            currentInput = '0';
+            previousInput = '';
+            operator = null;
+            updateDisplay();
+        }
+
+        // 마지막 글자 삭제
+        function deleteLast() {
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+
+        // 계산 실행
+        function calculate() {
+            if (operator === null || shouldResetScreen) return;
+            
+            let result;
+            const prev = parseFloat(previousInput);
+            const current = parseFloat(currentInput);
+
+            if (isNaN(prev) || isNaN(current)) return;
+
+            switch (operator) {
+                case '+': result = prev + current; break;
+                case '-': result = prev - current; break;
+                case '*': result = prev * current; break;
+                case '/': 
+                    if (current === 0) {
+                        showError("Error");
+                        return;
+                    }
+                    result = prev / current; 
+                    break;
+                default: return;
+            }
+
+            // 부동소수점 오차 방지 (최대 10자리)
+            currentInput = Math.round(result * 10000000000) / 10000000000;
+            operator = null;
+            previousInput = '';
+            shouldResetScreen = true;
+            updateDisplay();
+        }
+
+        // 화면 업데이트
+        function updateDisplay() {
+            currentDisplay.innerText = currentInput;
+            if (operator != null) {
+                const opSymbols = { '+': '+', '-': '-', '*': '×', '/': '÷' };
+                previousDisplay.innerText = `${previousInput} ${opSymbols[operator]}`;
+            } else {
+                previousDisplay.innerText = '';
+            }
+        }
+
+        function showError(msg) {
+            currentDisplay.innerText = msg;
+            setTimeout(clearDisplay, 1500);
+        }
+
+        // 키보드 지원
+        window.addEventListener('keydown', (e) => {
+            if (e.key >= 0 && e.key <= 9) appendNumber(e.key);
+            if (e.key === '.') appendNumber('.');
+            if (e.key === '=' || e.key === 'Enter') calculate();
+            if (e.key === 'Backspace') deleteLast();
+            if (e.key === 'Escape') clearDisplay();
+            if (['+', '-', '*', '/'].includes(e.key)) appendOperator(e.key);
+        });
+    </script>
+</body>
+</html>
